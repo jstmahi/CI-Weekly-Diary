@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Weekly Diary - N. KRISHNAIAH</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <style>
+        /* ============================================================
+           APPLE-INSPIRED DESIGN SYSTEM
+        ============================================================ */
+        :root {
+            --bg-color: #f5f5f7;
+            --surface-color: #ffffff;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --border-color: #d2d2d7;
+            --blue-apple: #0071e3;
+            --blue-hover: #0077ed;
+            --purple-apple: #af52de;
+            --green-apple: #34c759;
+            --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.04);
+            --shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: var(--surface-color);
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            transition: box-shadow 0.3s ease;
+        }
+
+        /* ============================================================
+           HEADERS & CONTROLS
+        ============================================================ */
+        .header {
+            text-align: center;
+            font-weight: 700;
+            font-size: 24px;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+        }
+
+        .sub-header {
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            margin-bottom: 30px;
+        }
+
+        .setup-panel {
+            background: #fbfbfd;
+            padding: 20px 24px;
+            border-radius: var(--radius-md);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
+        }
+
+        .setup-panel b {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        input[type="date"],
+        .flatpickr-input {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-family: var(--font-family);
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        input[type="date"]:focus,
+        .flatpickr-input:focus,
+        textarea:focus {
+            border-color: var(--blue-apple);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+        }
+
+        /* ============================================================
+           MAIN TABLE
+        ============================================================ */
+        .table-wrapper {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface-color);
+        }
+
+        th,
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        th {
+            background: #f5f5f7;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: left;
+        }
+
+        .date-cell {
+            text-align: center;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .date-cell .date-num {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .date-cell .day-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .text-box {
+            width: 100%;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            font-family: var(--font-family);
+            font-size: 14px;
+            resize: none;
+            background: #fbfbfd;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            line-height: 1.5;
+            color: var(--text-primary);
+        }
+
+        .text-box:hover {
+            background: #f5f5f7;
+        }
+
+        /* Inner Table for dynamic rows */
+        .inner-table {
+            width: 100%;
+            border: none;
+        }
+
+        .inner-table td {
+            padding: 8px 0;
+            border: none;
+            border-bottom: 1px dashed #e5e5ea;
+        }
+
+        .inner-table tr:last-child td {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .time-cell {
+            width: 35%;
+            padding-right: 16px !important;
+        }
+
+        .work-cell {
+            width: 65%;
+        }
+
+        .time-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .work-input-wrap {
+            position: relative;
+        }
+
+        .mic-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            background: #e5e5ea;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .mic-btn:hover {
+            background: #d1d1d6;
+            transform: scale(1.1);
+        }
+
+        .active-mic {
+            background: #ff3b30;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        .add-row-btn {
+            background: transparent;
+            color: var(--blue-apple);
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            padding: 8px 0;
+            margin-top: 8px;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .add-row-btn:hover {
+            color: var(--blue-hover);
+        }
+
+        /* ============================================================
+           ACTION BUTTONS
+        ============================================================ */
+        .action-btns {
+            margin-top: 40px;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: var(--font-family);
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, var(--purple-apple), #903cc9);
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, var(--blue-apple), var(--blue-hover));
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, var(--green-apple), #28a745);
+        }
+
+        /* Preview Modal */
+        #previewModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            overflow-y: auto;
+        }
+
+        .modal-body {
+            background: white;
+            width: 90%;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-btn {
+            float: right;
+            background: #f2f2f7;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #ff3b30;
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 59, 48, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
+            }
+        }
+
+        /* Row enter animation */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        tbody tr {
+            animation: fadeUp 0.4s ease forwards;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .container {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">Official Weekly Diary</div>
+        <div class="sub-header" id="rangeHeader">Select a starting Sunday to generate diary</div>
+
+        <div class="setup-panel no-print">
+            <input type="text" id="dateSelector" placeholder="Select Week Start...">
+            <b>Officer: N. KRISHNAIAH, CI</b>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="mainDiaryTable">
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Date</th>
+                        <th style="width: 25%;">Travel & Night Halts</th>
+                        <th style="width: 23%; border-left: 1px solid var(--border-color);">Timings (Arr/Dep)</th>
+                        <th style="width: 40%;">Details of Work Done</th>
+                    </tr>
+                </thead>
+                <tbody id="diaryRows"></tbody>
+            </table>
+        </div>
+
+        <div class="action-btns no-print">
+            <button class="btn btn-purple" onclick="runAI()">✨ Align & Fix Language</button>
+            <button class="btn btn-blue" onclick="openPreview()">👁️ Preview Report</button>
+            <button class="btn btn-green" onclick="saveAsWord()">📥 Export to Word</button>
+        </div>
+    </div>
+
+    <div id="previewModal">
+        <div class="modal-body">
+            <button class="close-btn" onclick="closePreview()">Close</button>
+            <div id="printArea"></div>
+        </div>
+    </div>
+
+    <script>
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const dict = { 'పీఎం': 'PM', 'ఏఎం': 'AM', 'టు': 'to', '౧': '1', '౨': '2', '౩': '3', '౪': '4', '౫': '5', '౬': '6', '౭': '7', '౮': '8', '౯': '9', '౦': '0' };
+
+        // Initialize Flatpickr for the main Date Selector
+        flatpickr("#dateSelector", {
+            onChange: function (selectedDates) {
+                if (selectedDates.length > 0) buildTable(selectedDates[0]);
+            }
+        });
+
+        function buildTable(startDate) {
+            const start = new Date(startDate);
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            document.getElementById('rangeHeader').innerText = `WEEK FROM ${fmt(start)} TO ${fmt(end)}`;
+
+            const body = document.getElementById('diaryRows');
+            body.innerHTML = '';
+            for (let i = 0; i < 7; i++) {
+                let day = new Date(start); day.setDate(start.getDate() + i);
+                body.innerHTML += `
+                <tr style="animation-delay: ${i * 0.05}s">
+                    <td class="date-cell">
+                        <div class="date-num">${fmt(day)}</div>
+                        <div class="day-name">${dayNames[i]}</div>
+                    </td>
+                    <td><textarea class="text-box travel-box" rows="4" placeholder="Enter travel details..."></textarea></td>
+                    <td colspan="2" style="padding: 0; border-left: 1px solid var(--border-color);">
+                        <table class="inner-table" id="group-${i}">
+                            <tr class="entry-row">
+                                <td class="time-cell" style="padding: 16px;">
+                                    <div class="time-inputs">
+                                        <input type="text" class="t-input arr-time" placeholder="Arrival (e.g. 09:00 AM)">
+                                        <input type="text" class="t-input dep-time" placeholder="Departure (e.g. 01:30 PM)">
+                                    </div>
+                                </td>
+                                <td class="work-cell" style="padding: 16px;">
+                                    <div class="work-input-wrap">
+                                        <textarea class="text-box w-input" rows="3" placeholder="Details of work done..."></textarea>
+                                        <button class="mic-btn no-print" onclick="startMic(this, 'te-IN')" title="Voice typing">🎤</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        <div style="padding: 0 16px 16px;">
+                            <button class="add-row-btn no-print" onclick="addEntry(${i})">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Add Activity
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            }
+            initPickers();
+        }
+
+        function addEntry(idx) {
+            const table = document.getElementById(`group-${idx}`);
+            const row = table.insertRow();
+            row.className = "entry-row";
+            row.innerHTML = `
+            <td class="time-cell" style="padding: 16px;">
+                <div class="time-inputs">
+                    <input type="text" class="t-input arr-time" placeholder="Arrival">
+                    <input type="text" class="t-input dep-time" placeholder="Departure">
+                </div>
+            </td>
+            <td class="work-cell" style="padding: 16px;">
+                <div class="work-input-wrap">
+                    <textarea class="text-box w-input" rows="2" placeholder="Details of work done..."></textarea>
+                    <button class="mic-btn no-print" onclick="startMic(this, 'te-IN')">🎤</button>
+                </div>
+            </td>`;
+            initPickers(); // Re-bind Flatpickr to new inputs
+        }
+
+        function initPickers() {
+            // Initialize beautiful 12-hour AM/PM time pickers on inputs that don't have it yet
+            flatpickr('.arr-time:not(.flatpickr-input), .dep-time:not(.flatpickr-input)', {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "h:i K",
+                allowInput: true // Lets users manually type "10:30 AM" if they prefer
+            });
+        }
+
+        function startMic(btn, lang) {
+            const area = btn.previousElementSibling;
+            const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            rec.lang = lang;
+            btn.classList.add('active-mic');
+            rec.start();
+            rec.onresult = (e) => { area.value += e.results[0][0].transcript + " "; btn.classList.remove('active-mic'); };
+            rec.onend = () => btn.classList.remove('active-mic');
+        }
+
+        function runAI() {
+            document.querySelectorAll('.w-input').forEach(el => {
+                let v = el.value;
+                for (let k in dict) v = v.replace(new RegExp(k, 'g'), dict[k]);
+                el.value = v.charAt(0).toUpperCase() + v.slice(1);
+            });
+            alert("Language aligned successfully.");
+        }
+
+        function openPreview() {
+            const area = document.getElementById('printArea');
+            area.innerHTML = `<h3 style="text-align:center; font-family:'Times New Roman';">WEEKLY DIARY OF N. KRISHNAIAH, CI OF POLICE</h3>` + getCleanTable();
+            document.getElementById('previewModal').style.display = 'block';
+        }
+
+        function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
+
+        // Converts the Apple-style DOM into strict formatting for the Word document
+        function getCleanTable() {
+            const clone = document.getElementById('mainDiaryTable').cloneNode(true);
+
+            // Format Time Inputs into simple text strings
+            clone.querySelectorAll('.time-inputs').forEach(div => {
+                const arr = div.querySelector('.arr-time').value;
+                const dep = div.querySelector('.dep-time').value;
+                const p = document.createElement('p');
+                let txt = [];
+                if (arr) txt.push(`Arr: ${arr}`);
+                if (dep) txt.push(`Dep: ${dep}`);
+                p.innerHTML = txt.join('<br>') || '-';
+                p.style.margin = "0";
+                div.parentNode.replaceChild(p, div);
+            });
+
+            // Format Textareas into simple paragraphs
+            clone.querySelectorAll('textarea').forEach(ta => {
+                const p = document.createElement('p');
+                p.innerText = ta.value; p.style.margin = "0"; p.style.whiteSpace = "pre-wrap";
+                ta.parentNode.replaceChild(p, ta);
+            });
+
+            clone.querySelectorAll('.no-print').forEach(b => b.remove());
+            return clone.outerHTML;
+        }
+
+        function saveAsWord() {
+            // Enforce strict Times New Roman print styling on the resulting word document
+            const html = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head><style>
+                table { border: 1pt solid black; border-collapse: collapse; width: 100%; }
+                td, th { border: 1pt solid black; padding: 6pt; font-family: 'Times New Roman'; font-size: 11pt; vertical-align: top; }
+                th { background: #e0e0e0; font-weight: bold; }
+                .inner-table { border: none !important; width: 100%; }
+                .inner-table td { border: none !important; border-bottom: 0.5pt solid black !important; padding: 4pt 0; }
+                .inner-table tr:last-child td { border-bottom: none !important; }
+                .time-cell { width: 35%; border-right: 0.5pt solid black !important; padding-right: 5pt !important; }
+                .work-cell { width: 65%; padding-left: 5pt !important; }
+            </style></head>
+            <body>
+                <h3 style="text-align:center; font-family:'Times New Roman'; text-transform:uppercase;">Weekly Diary of N. KRISHNAIAH</h3>
+                <p style="text-align:center; font-family:'Times New Roman';">${document.getElementById('rangeHeader').innerText}</p>
+                ${getCleanTable()}
+            </body></html>`;
+
+            const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = 'Official_Diary_Krishnaiah.doc'; a.click();
+        }
+
+        function fmt(d) { return d.getDate().toString().padStart(2, '0') + "." + (d.getMonth() + 1).toString().padStart(2, '0') + "." + d.getFullYear(); }
+    </script>
+</body>
+
+</html>
