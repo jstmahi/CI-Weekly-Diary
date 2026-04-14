@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Official Weekly Diary - N. KRISHNAIAH</title>
+    <title>CI Weekly Diary</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -118,7 +118,10 @@
         .table-wrapper {
             border-radius: var(--radius-md);
             overflow: hidden;
+            /* Provides rounded corners to the table inside */
             border: 1px solid var(--border-color);
+            overflow-x: auto;
+            /* Handle horizontal overflow on smaller screens */
         }
 
         table {
@@ -217,9 +220,9 @@
             position: relative;
         }
 
-        .mic-btn {
+        .mic-btn,
+        .del-row-btn {
             position: absolute;
-            right: 10px;
             bottom: 10px;
             background: #e5e5ea;
             border: none;
@@ -234,13 +237,28 @@
             transition: all 0.2s;
         }
 
-        .mic-btn:hover {
+        .mic-btn {
+            right: 10px;
+        }
+
+        .del-row-btn {
+            right: 46px;
+            color: #ff3b30;
+            background: #ffeeee;
+        }
+
+        .mic-btn:hover,
+        .del-row-btn:hover {
             background: #d1d1d6;
             transform: scale(1.1);
         }
 
+        .del-row-btn:hover {
+            background: #ffdada;
+        }
+
         .active-mic {
-            background: #ff3b30;
+            background: #ff3b30 !important;
             color: white;
             animation: pulse 1.5s infinite;
         }
@@ -270,6 +288,7 @@
         .action-btns {
             margin-top: 40px;
             display: flex;
+            flex-wrap: wrap;
             gap: 16px;
             justify-content: center;
         }
@@ -308,6 +327,58 @@
             background: linear-gradient(135deg, var(--green-apple), #28a745);
         }
 
+        .btn-gray {
+            background: #e5e5ea;
+            color: var(--text-primary);
+            box-shadow: none;
+        }
+
+        .btn-gray:hover {
+            background: #d1d1d6;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Toast Container */
+        #toastContainer {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(40, 40, 40, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .toast-success {
+            background: rgba(52, 199, 89, 0.95);
+        }
+
+        .toast-info {
+            background: rgba(0, 113, 227, 0.95);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+
         /* Preview Modal */
         #previewModal {
             display: none;
@@ -338,6 +409,11 @@
             font-weight: 600;
             color: #ff3b30;
             cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: #e5e5ea;
         }
 
         @keyframes pulse {
@@ -414,6 +490,7 @@
             <button class="btn btn-purple" onclick="runAI()">✨ Align & Fix Language</button>
             <button class="btn btn-blue" onclick="openPreview()">👁️ Preview Report</button>
             <button class="btn btn-green" onclick="saveAsWord()">📥 Export to Word</button>
+            <button class="btn btn-gray" onclick="clearDiary()">🗑️ Clear Data</button>
         </div>
     </div>
 
@@ -424,29 +501,114 @@
         </div>
     </div>
 
+    <div id="toastContainer"></div>
+
     <script>
         const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const dict = { 'పీఎం': 'PM', 'ఏఎం': 'AM', 'టు': 'to', '౧': '1', '౨': '2', '౩': '3', '౪': '4', '౫': '5', '౬': '6', '౭': '7', '౮': '8', '౯': '9', '౦': '0' };
 
+        let saveTimeout;
+
         // Initialize Flatpickr for the main Date Selector
-        flatpickr("#dateSelector", {
+        const dateSelector = flatpickr("#dateSelector", {
             onChange: function (selectedDates) {
-                if (selectedDates.length > 0) buildTable(selectedDates[0]);
+                if (selectedDates.length > 0) {
+                    buildTable(selectedDates[0]);
+                    saveDebounced();
+                }
             }
         });
 
+        // Initialize App on Load
+        window.onload = () => {
+            const hasInitialData = loadFromLocalStorage();
+            if (!hasInitialData) {
+                // If it's a completely fresh start, load the most recent Sunday by default
+                const sunday = getRecentSunday();
+                dateSelector.setDate(sunday);
+                buildTable(sunday);
+            }
+            // Bind single delegation event for auto-save instead of attaching to every input
+            document.getElementById('mainDiaryTable').addEventListener('input', saveDebounced);
+        };
+
+        function getRecentSunday() {
+            const d = new Date();
+            d.setDate(d.getDate() - d.getDay()); // Revert to Sunday (0)
+            return d;
+        }
+
+        // --- State Management ---
+        function saveDebounced() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveToLocalStorage, 1000); // 1s debounce
+        }
+
+        function saveToLocalStorage() {
+            const dateVal = document.getElementById('dateSelector').value;
+            if (!dateVal) return;
+
+            const diaryData = [];
+            const rows = document.getElementById('diaryRows').children;
+            for (let i = 0; i < rows.length; i++) {
+                const trLabel = rows[i].querySelector('.travel-box');
+                const travel = trLabel ? trLabel.value : '';
+
+                const entries = [];
+                const innerRows = rows[i].querySelectorAll('.inner-table .entry-row');
+                innerRows.forEach(ir => {
+                    entries.push({
+                        arr: ir.querySelector('.arr-time').value,
+                        dep: ir.querySelector('.dep-time').value,
+                        work: ir.querySelector('.w-input').value
+                    });
+                });
+                diaryData.push({ travel, entries });
+            }
+            localStorage.setItem('weeklyDiaryData', JSON.stringify({ startDate: dateVal, data: diaryData }));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('weeklyDiaryData');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.startDate && parsed.data) {
+                        dateSelector.setDate(parsed.startDate);
+                        buildTableFromData(new Date(parsed.startDate), parsed.data);
+                        showToast("Draft restored securely.", "info");
+                        return true;
+                    }
+                } catch (e) { console.error("Error loading save", e); }
+            }
+            return false;
+        }
+
+        function clearDiary() {
+            if (confirm("Are you sure you want to clear all contents of this diary? This action cannot be undone.")) {
+                localStorage.removeItem('weeklyDiaryData');
+                const sunday = getRecentSunday();
+                dateSelector.setDate(sunday);
+                buildTable(sunday);
+                showToast("Diary data cleared.", "success");
+            }
+        }
+
+        // --- UI Rendering ---
         function buildTable(startDate) {
+            // Generates an empty shell structure for the week
             const start = new Date(startDate);
             const end = new Date(start);
             end.setDate(start.getDate() + 6);
             document.getElementById('rangeHeader').innerText = `WEEK FROM ${fmt(start)} TO ${fmt(end)}`;
 
-            const body = document.getElementById('diaryRows');
-            body.innerHTML = '';
+            const fragment = document.createDocumentFragment();
             for (let i = 0; i < 7; i++) {
                 let day = new Date(start); day.setDate(start.getDate() + i);
-                body.innerHTML += `
-                <tr style="animation-delay: ${i * 0.05}s">
+
+                const tr = document.createElement('tr');
+                tr.style.animationDelay = `${i * 0.05}s`;
+                tr.innerHTML = `
                     <td class="date-cell">
                         <div class="date-num">${fmt(day)}</div>
                         <div class="day-name">${dayNames[i]}</div>
@@ -454,20 +616,7 @@
                     <td><textarea class="text-box travel-box" rows="4" placeholder="Enter travel details..."></textarea></td>
                     <td colspan="2" style="padding: 0; border-left: 1px solid var(--border-color);">
                         <table class="inner-table" id="group-${i}">
-                            <tr class="entry-row">
-                                <td class="time-cell" style="padding: 16px;">
-                                    <div class="time-inputs">
-                                        <input type="text" class="t-input arr-time" placeholder="Arrival (e.g. 09:00 AM)">
-                                        <input type="text" class="t-input dep-time" placeholder="Departure (e.g. 01:30 PM)">
-                                    </div>
-                                </td>
-                                <td class="work-cell" style="padding: 16px;">
-                                    <div class="work-input-wrap">
-                                        <textarea class="text-box w-input" rows="3" placeholder="Details of work done..."></textarea>
-                                        <button class="mic-btn no-print" onclick="startMic(this, 'te-IN')" title="Voice typing">🎤</button>
-                                    </div>
-                                </td>
-                            </tr>
+                            ${createEntryRowHTML(true)}
                         </table>
                         <div style="padding: 0 16px 16px;">
                             <button class="add-row-btn no-print" onclick="addEntry(${i})">
@@ -475,59 +624,163 @@
                                 Add Activity
                             </button>
                         </div>
-                    </td>
-                </tr>`;
+                    </td>`;
+                fragment.appendChild(tr);
             }
+            const body = document.getElementById('diaryRows');
+            body.innerHTML = '';
+            body.appendChild(fragment);
             initPickers();
+        }
+
+        function buildTableFromData(startDate, data) {
+            // Hydrates the DOM based on provided localized saved data
+            const start = new Date(startDate);
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            document.getElementById('rangeHeader').innerText = `WEEK FROM ${fmt(start)} TO ${fmt(end)}`;
+
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < 7; i++) {
+                let day = new Date(start); day.setDate(start.getDate() + i);
+                const dayData = data[i] || { travel: '', entries: [{ arr: '', dep: '', work: '' }] };
+                if (dayData.entries.length === 0) dayData.entries.push({ arr: '', dep: '', work: '' });
+
+                let innerRowsHtml = '';
+                dayData.entries.forEach((e, idx) => {
+                    innerRowsHtml += createEntryRowHTML(idx === 0, e.arr, e.dep, e.work);
+                });
+
+                const tr = document.createElement('tr');
+                tr.style.animationDelay = `${i * 0.05}s`;
+                tr.innerHTML = `
+                    <td class="date-cell">
+                        <div class="date-num">${fmt(day)}</div>
+                        <div class="day-name">${dayNames[i]}</div>
+                    </td>
+                    <td><textarea class="text-box travel-box" rows="4" placeholder="Enter travel details...">${escapeHtml(dayData.travel)}</textarea></td>
+                    <td colspan="2" style="padding: 0; border-left: 1px solid var(--border-color);">
+                        <table class="inner-table" id="group-${i}">
+                            ${innerRowsHtml}
+                        </table>
+                        <div style="padding: 0 16px 16px;">
+                            <button class="add-row-btn no-print" onclick="addEntry(${i})">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Add Activity
+                            </button>
+                        </div>
+                    </td>`;
+                fragment.appendChild(tr);
+            }
+            const body = document.getElementById('diaryRows');
+            body.innerHTML = '';
+            body.appendChild(fragment);
+            initPickers();
+        }
+
+        function createEntryRowHTML(isFirst, arr = '', dep = '', work = '') {
+            return `
+            <tr class="entry-row">
+                <td class="time-cell" style="padding: 16px;">
+                    <div class="time-inputs">
+                        <input type="text" class="t-input arr-time" placeholder="Arrival" value="${escapeHtml(arr)}">
+                        <input type="text" class="t-input dep-time" placeholder="Departure" value="${escapeHtml(dep)}">
+                    </div>
+                </td>
+                <td class="work-cell" style="padding: 16px;">
+                    <div class="work-input-wrap">
+                        <textarea class="text-box w-input" rows="${isFirst ? 3 : 2}" placeholder="Details of work done...">${escapeHtml(work)}</textarea>
+                        <button class="mic-btn no-print" onclick="startMic(this, 'te-IN')" title="Voice typing">🎤</button>
+                        ${!isFirst ? `<button class="del-row-btn no-print" onclick="deleteEntry(this)" title="Remove Activity">❌</button>` : ''}
+                    </div>
+                </td>
+            </tr>`;
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
         function addEntry(idx) {
             const table = document.getElementById(`group-${idx}`);
-            const row = table.insertRow();
-            row.className = "entry-row";
-            row.innerHTML = `
-            <td class="time-cell" style="padding: 16px;">
-                <div class="time-inputs">
-                    <input type="text" class="t-input arr-time" placeholder="Arrival">
-                    <input type="text" class="t-input dep-time" placeholder="Departure">
-                </div>
-            </td>
-            <td class="work-cell" style="padding: 16px;">
-                <div class="work-input-wrap">
-                    <textarea class="text-box w-input" rows="2" placeholder="Details of work done..."></textarea>
-                    <button class="mic-btn no-print" onclick="startMic(this, 'te-IN')">🎤</button>
-                </div>
-            </td>`;
+            table.insertAdjacentHTML('beforeend', createEntryRowHTML(false));
             initPickers(); // Re-bind Flatpickr to new inputs
+            saveDebounced();
+        }
+
+        function deleteEntry(btn) {
+            const row = btn.closest('.entry-row');
+            if (row) {
+                row.remove();
+                saveDebounced();
+            }
         }
 
         function initPickers() {
-            // Initialize beautiful 12-hour AM/PM time pickers on inputs that don't have it yet
+            // Initialize 12-hour AM/PM time pickers; targeted gracefully without duplication
             flatpickr('.arr-time:not(.flatpickr-input), .dep-time:not(.flatpickr-input)', {
                 enableTime: true,
                 noCalendar: true,
                 dateFormat: "h:i K",
-                allowInput: true // Lets users manually type "10:30 AM" if they prefer
+                allowInput: true
             });
         }
 
+        // --- Interactivity ---
         function startMic(btn, lang) {
             const area = btn.previousElementSibling;
             const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             rec.lang = lang;
             btn.classList.add('active-mic');
-            rec.start();
-            rec.onresult = (e) => { area.value += e.results[0][0].transcript + " "; btn.classList.remove('active-mic'); };
+
+            // Comprehensive Event Handlers to avoid infinite spin states
+            rec.onresult = (e) => {
+                area.value += e.results[0][0].transcript + " ";
+                btn.classList.remove('active-mic');
+                saveDebounced();
+            };
+            rec.onerror = (e) => {
+                console.warn("Speech recognition error", e);
+                btn.classList.remove('active-mic');
+                showToast("Voice typing stopped.", "info");
+            };
+            rec.onnomatch = () => btn.classList.remove('active-mic');
             rec.onend = () => btn.classList.remove('active-mic');
+
+            rec.start();
         }
 
         function runAI() {
             document.querySelectorAll('.w-input').forEach(el => {
                 let v = el.value;
+                if (!v) return;
+
                 for (let k in dict) v = v.replace(new RegExp(k, 'g'), dict[k]);
-                el.value = v.charAt(0).toUpperCase() + v.slice(1);
+
+                // Capitalize first letter of every sentence logically
+                v = v.replace(/\s+/g, ' ').trim();
+                v = v.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, sep, c) => sep + c.toUpperCase());
+                el.value = v;
             });
-            alert("Language aligned successfully.");
+            showToast("Language aligned & sentences capitalized successfully.", "success");
+            saveDebounced();
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+
+            // Trigger reflow for animation
+            requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400); // Wait for transition
+            }, 3000);
         }
 
         function openPreview() {
@@ -538,11 +791,11 @@
 
         function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
 
-        // Converts the Apple-style DOM into strict formatting for the Word document
+        // --- Export Engine ---
         function getCleanTable() {
+            // Uses cloning to sanitize inputs into flat HTML valid for Word layout
             const clone = document.getElementById('mainDiaryTable').cloneNode(true);
 
-            // Format Time Inputs into simple text strings
             clone.querySelectorAll('.time-inputs').forEach(div => {
                 const arr = div.querySelector('.arr-time').value;
                 const dep = div.querySelector('.dep-time').value;
@@ -555,7 +808,6 @@
                 div.parentNode.replaceChild(p, div);
             });
 
-            // Format Textareas into simple paragraphs
             clone.querySelectorAll('textarea').forEach(ta => {
                 const p = document.createElement('p');
                 p.innerText = ta.value; p.style.margin = "0"; p.style.whiteSpace = "pre-wrap";
@@ -567,14 +819,16 @@
         }
 
         function saveAsWord() {
-            // Enforce strict Times New Roman print styling on the resulting word document
+            // Applying strict MSO (Microsoft Office) reliable styling syntax to the HTML blob
             const html = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <head><style>
                 table { border: 1pt solid black; border-collapse: collapse; width: 100%; }
-                td, th { border: 1pt solid black; padding: 6pt; font-family: 'Times New Roman'; font-size: 11pt; vertical-align: top; }
-                th { background: #e0e0e0; font-weight: bold; }
-                .inner-table { border: none !important; width: 100%; }
+                /* Explicit table styling required due to MSO limitations */
+                #mainDiaryTable td, #mainDiaryTable th { border: 1pt solid black; padding: 6pt; font-family: 'Times New Roman'; font-size: 11pt; vertical-align: top; }
+                #mainDiaryTable th { background: #e0e0e0; font-weight: bold; }
+                
+                .inner-table { border: none !important; width: 100%; border-collapse: collapse; }
                 .inner-table td { border: none !important; border-bottom: 0.5pt solid black !important; padding: 4pt 0; }
                 .inner-table tr:last-child td { border-bottom: none !important; }
                 .time-cell { width: 35%; border-right: 0.5pt solid black !important; padding-right: 5pt !important; }
@@ -589,6 +843,7 @@
             const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
             a.download = 'Official_Diary_Krishnaiah.doc'; a.click();
+            showToast("Exporting to Word...", "info");
         }
 
         function fmt(d) { return d.getDate().toString().padStart(2, '0') + "." + (d.getMonth() + 1).toString().padStart(2, '0') + "." + d.getFullYear(); }
