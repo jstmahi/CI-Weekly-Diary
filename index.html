@@ -4,15 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CI Weekly Diary</title>
+    <title>CI Weekly Diary - Cloud Enabled</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         /* ============================================================
@@ -28,6 +26,8 @@
             --blue-hover: #0077ed;
             --purple-apple: #af52de;
             --green-apple: #34c759;
+            --orange-apple: #ff9500;
+            --red-apple: #ff3b30;
             --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.04);
             --shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.08);
             --radius-lg: 18px;
@@ -91,8 +91,7 @@
             font-size: 15px;
         }
 
-        input[type="date"],
-        .flatpickr-input {
+        input[type="date"] {
             background: var(--surface-color);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-sm);
@@ -106,7 +105,6 @@
         }
 
         input[type="date"]:focus,
-        .flatpickr-input:focus,
         textarea:focus {
             border-color: var(--blue-apple);
             box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
@@ -118,10 +116,8 @@
         .table-wrapper {
             border-radius: var(--radius-md);
             overflow: hidden;
-            /* Provides rounded corners to the table inside */
             border: 1px solid var(--border-color);
             overflow-x: auto;
-            /* Handle horizontal overflow on smaller screens */
         }
 
         table {
@@ -184,7 +180,6 @@
             background: #f5f5f7;
         }
 
-        /* Inner Table for dynamic rows */
         .inner-table {
             width: 100%;
             border: none;
@@ -194,6 +189,7 @@
             padding: 8px 0;
             border: none;
             border-bottom: 1px dashed #e5e5ea;
+            position: relative;
         }
 
         .inner-table tr:last-child td {
@@ -210,13 +206,8 @@
             width: 65%;
         }
 
-        .time-inputs {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .work-input-wrap {
+        .work-input-wrap,
+        .time-input-wrap {
             position: relative;
         }
 
@@ -243,7 +234,7 @@
 
         .del-row-btn {
             right: 46px;
-            color: #ff3b30;
+            color: var(--red-apple);
             background: #ffeeee;
         }
 
@@ -258,7 +249,7 @@
         }
 
         .active-mic {
-            background: #ff3b30 !important;
+            background: var(--red-apple) !important;
             color: white;
             animation: pulse 1.5s infinite;
         }
@@ -285,12 +276,19 @@
         /* ============================================================
            ACTION BUTTONS
         ============================================================ */
-        .action-btns {
-            margin-top: 40px;
+        .action-btns,
+        .cloud-btns {
+            margin-top: 30px;
             display: flex;
             flex-wrap: wrap;
             gap: 16px;
             justify-content: center;
+        }
+
+        .cloud-btns {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
         }
 
         .btn {
@@ -302,17 +300,16 @@
             font-weight: 600;
             font-size: 14px;
             color: white;
-            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: all 0.3s ease;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-        }
-
-        .btn:active {
-            transform: translateY(0);
         }
 
         .btn-purple {
@@ -327,6 +324,10 @@
             background: linear-gradient(135deg, var(--green-apple), #28a745);
         }
 
+        .btn-orange {
+            background: linear-gradient(135deg, var(--orange-apple), #ff8800);
+        }
+
         .btn-gray {
             background: #e5e5ea;
             color: var(--text-primary);
@@ -338,7 +339,7 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
         }
 
-        /* Toast Container */
+        /* Toast & Modals */
         #toastContainer {
             position: fixed;
             bottom: 30px;
@@ -359,14 +360,17 @@
             border-radius: 30px;
             font-size: 14px;
             font-weight: 500;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
             opacity: 0;
             transform: translateY(20px);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.4s ease;
         }
 
         .toast-success {
             background: rgba(52, 199, 89, 0.95);
+        }
+
+        .toast-error {
+            background: rgba(255, 59, 48, 0.95);
         }
 
         .toast-info {
@@ -378,9 +382,7 @@
             transform: translateY(0);
         }
 
-
-        /* Preview Modal */
-        #previewModal {
+        .modal-backdrop {
             display: none;
             position: fixed;
             inset: 0;
@@ -388,6 +390,7 @@
             backdrop-filter: blur(10px);
             z-index: 9999;
             overflow-y: auto;
+            text-align: left;
         }
 
         .modal-body {
@@ -398,22 +401,71 @@
             padding: 40px;
             border-radius: var(--radius-lg);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .modal-body-sm {
+            max-width: 600px;
         }
 
         .close-btn {
-            float: right;
+            position: absolute;
+            right: 20px;
+            top: 20px;
             background: #f2f2f7;
             border: none;
             padding: 8px 16px;
             border-radius: 20px;
             font-weight: 600;
-            color: #ff3b30;
+            color: var(--red-apple);
             cursor: pointer;
+        }
+
+        .cloud-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+            background: #fbfbfd;
+        }
+
+        .cloud-item span {
+            font-weight: 500;
+        }
+
+        .download-link {
+            text-decoration: none;
+            background: var(--blue-apple);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
             transition: background 0.2s;
         }
 
-        .close-btn:hover {
-            background: #e5e5ea;
+        .download-link:hover {
+            background: var(--blue-hover);
+        }
+
+        .delete-link {
+            text-decoration: none;
+            background: #ffebeb;
+            color: var(--red-apple);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .delete-link:hover {
+            background: #ffdada;
         }
 
         @keyframes pulse {
@@ -430,7 +482,6 @@
             }
         }
 
-        /* Row enter animation */
         @keyframes fadeUp {
             from {
                 opacity: 0;
@@ -465,11 +516,11 @@
 
     <div class="container">
         <div class="header">Official Weekly Diary</div>
-        <div class="sub-header" id="rangeHeader">Select a starting Sunday to generate diary</div>
+        <div class="sub-header" id="rangeHeader">Select a Sunday to start</div>
 
         <div class="setup-panel no-print">
-            <input type="text" id="dateSelector" placeholder="Select Week Start...">
-            <b>Officer: N. KRISHNAIAH, CI</b>
+            <input type="date" id="dateSelector" onchange="handleDateChange()">
+            <b id="officerNameNode">Officer: N. KRISHNAIAH, CI</b>
         </div>
 
         <div class="table-wrapper">
@@ -489,59 +540,93 @@
         <div class="action-btns no-print">
             <button class="btn btn-purple" onclick="runAI()"> Align & Fix Language</button>
             <button class="btn btn-blue" onclick="openPreview()"> Preview Report</button>
-            <button class="btn btn-green" onclick="saveAsWord()"> Export to Word</button>
-            <button class="btn btn-gray" onclick="clearDiary()"> Clear Data</button>
+            <button class="btn btn-gray" onclick="saveAsWord()"> Local Download</button>
+            <button class="btn btn-gray" onclick="clearDiary()" style="color:var(--red-apple);">🗑️ Clear Draft</button>
+        </div>
+
+        <div class="cloud-btns no-print">
+            <button class="btn btn-green" onclick="uploadToCloud()"> Save & Upload to Cloud</button>
+            <button class="btn btn-orange" onclick="openCloudArchive()"> View Cloud Archive</button>
         </div>
     </div>
 
-    <div id="previewModal">
+    <div id="previewModal" class="modal-backdrop">
         <div class="modal-body">
-            <button class="close-btn" onclick="closePreview()">Close</button>
+            <button class="close-btn" onclick="closeModal('previewModal')">Close</button>
             <div id="printArea"></div>
+        </div>
+    </div>
+
+    <div id="cloudModal" class="modal-backdrop">
+        <div class="modal-body modal-body-sm">
+            <button class="close-btn" onclick="closeModal('cloudModal')">Close</button>
+            <h2>☁️ Your Cloud Reports</h2>
+            <p style="color:var(--text-secondary); margin-bottom:20px;">Securely backed up reports for <span
+                    id="archiveName"></span>.</p>
+            <div id="cloudList"></div>
         </div>
     </div>
 
     <div id="toastContainer"></div>
 
     <script>
+        // ==========================================
+        // 🚨 SUPABASE CLOUD SETUP 
+        // ==========================================
+        const SUPABASE_URL = 'https://mmzcmwomqntfiuryknjx.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_uDM_KWtORUquIcCSIbTIcQ_UCKXZJSW';
+
+        let supabaseClient = null;
+        if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
         const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const dict = { 'పీఎం': 'PM', 'ఏఎం': 'AM', 'టు': 'to', '౧': '1', '౨': '2', '౩': '3', '౪': '4', '౫': '5', '౬': '6', '౭': '7', '౮': '8', '౯': '9', '౦': '0' };
-
         let saveTimeout;
 
-        // Initialize Flatpickr for the main Date Selector
-        const dateSelector = flatpickr("#dateSelector", {
-            onChange: function (selectedDates) {
-                if (selectedDates.length > 0) {
-                    buildTable(selectedDates[0]);
-                    saveDebounced();
-                }
-            }
-        });
-
-        // Initialize App on Load
+        // Initialize App
         window.onload = () => {
             const hasInitialData = loadFromLocalStorage();
             if (!hasInitialData) {
-                // If it's a completely fresh start, load the most recent Sunday by default
                 const sunday = getRecentSunday();
-                dateSelector.setDate(sunday);
+                document.getElementById('dateSelector').value = formatDateForInput(sunday);
                 buildTable(sunday);
             }
-            // Bind single delegation event for auto-save instead of attaching to every input
             document.getElementById('mainDiaryTable').addEventListener('input', saveDebounced);
         };
 
         function getRecentSunday() {
-            const d = new Date();
-            d.setDate(d.getDate() - d.getDay()); // Revert to Sunday (0)
-            return d;
+            const d = new Date(); d.setDate(d.getDate() - d.getDay()); return d;
         }
 
-        // --- State Management ---
+        function formatDateForInput(d) {
+            return d.getFullYear() + '-' + (d.getMonth() + 1).toString().padStart(2, '0') + '-' + d.getDate().toString().padStart(2, '0');
+        }
+
+        function handleDateChange() {
+            const val = document.getElementById('dateSelector').value;
+            if (!val) return;
+
+            let start = new Date(val);
+            if (isNaN(start.getTime())) return;
+
+            // Snap to most recent Sunday securely
+            const dayOffset = start.getDay();
+            if (dayOffset !== 0) {
+                start.setDate(start.getDate() - dayOffset);
+                document.getElementById('dateSelector').value = formatDateForInput(start);
+                showToast("Date automatically snapped to Sunday.", "info");
+            }
+
+            buildTable(start);
+            saveDebounced();
+        }
+
+        // --- Data Persistence (Local Storage for Drafts) ---
         function saveDebounced() {
             clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(saveToLocalStorage, 1000); // 1s debounce
+            saveTimeout = setTimeout(saveToLocalStorage, 1000);
         }
 
         function saveToLocalStorage() {
@@ -551,15 +636,12 @@
             const diaryData = [];
             const rows = document.getElementById('diaryRows').children;
             for (let i = 0; i < rows.length; i++) {
-                const trLabel = rows[i].querySelector('.travel-box');
-                const travel = trLabel ? trLabel.value : '';
-
+                const travel = rows[i].querySelector('.travel-box').value;
                 const entries = [];
                 const innerRows = rows[i].querySelectorAll('.inner-table .entry-row');
                 innerRows.forEach(ir => {
                     entries.push({
-                        arr: ir.querySelector('.arr-time').value,
-                        dep: ir.querySelector('.dep-time').value,
+                        time: ir.querySelector('.t-input').value,
                         work: ir.querySelector('.w-input').value
                     });
                 });
@@ -574,9 +656,8 @@
                 try {
                     const parsed = JSON.parse(saved);
                     if (parsed.startDate && parsed.data) {
-                        dateSelector.setDate(parsed.startDate);
+                        document.getElementById('dateSelector').value = parsed.startDate;
                         buildTableFromData(new Date(parsed.startDate), parsed.data);
-                        showToast("Draft restored securely.", "info");
                         return true;
                     }
                 } catch (e) { console.error("Error loading save", e); }
@@ -585,106 +666,77 @@
         }
 
         function clearDiary() {
-            if (confirm("Are you sure you want to clear all contents of this diary? This action cannot be undone.")) {
+            if (confirm("Clear local draft? Cloud backups won't be deleted.")) {
                 localStorage.removeItem('weeklyDiaryData');
                 const sunday = getRecentSunday();
-                dateSelector.setDate(sunday);
+                document.getElementById('dateSelector').value = formatDateForInput(sunday);
                 buildTable(sunday);
-                showToast("Diary data cleared.", "success");
+                showToast("Local draft cleared.", "success");
             }
         }
 
         // --- UI Rendering ---
         function buildTable(startDate) {
-            // Generates an empty shell structure for the week
-            const start = new Date(startDate);
-            const end = new Date(start);
-            end.setDate(start.getDate() + 6);
+            const start = new Date(startDate); const end = new Date(start); end.setDate(start.getDate() + 6);
             document.getElementById('rangeHeader').innerText = `WEEK FROM ${fmt(start)} TO ${fmt(end)}`;
 
             const fragment = document.createDocumentFragment();
             for (let i = 0; i < 7; i++) {
                 let day = new Date(start); day.setDate(start.getDate() + i);
-
-                const tr = document.createElement('tr');
-                tr.style.animationDelay = `${i * 0.05}s`;
-                tr.innerHTML = `
-                    <td class="date-cell">
-                        <div class="date-num">${fmt(day)}</div>
-                        <div class="day-name">${dayNames[i]}</div>
-                    </td>
-                    <td><textarea class="text-box travel-box" rows="4" placeholder="Enter travel details..."></textarea></td>
-                    <td colspan="2" style="padding: 0; border-left: 1px solid var(--border-color);">
-                        <table class="inner-table" id="group-${i}">
-                            ${createEntryRowHTML(true)}
-                        </table>
-                        <div style="padding: 0 16px 16px;">
-                            <button class="add-row-btn no-print" onclick="addEntry(${i})">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                                Add Activity
-                            </button>
-                        </div>
-                    </td>`;
+                const tr = document.createElement('tr'); tr.style.animationDelay = `${i * 0.05}s`;
+                tr.innerHTML = getDayRowHTML(i, day);
                 fragment.appendChild(tr);
             }
-            const body = document.getElementById('diaryRows');
-            body.innerHTML = '';
-            body.appendChild(fragment);
-            initPickers();
+            const body = document.getElementById('diaryRows'); body.innerHTML = ''; body.appendChild(fragment);
         }
 
         function buildTableFromData(startDate, data) {
-            // Hydrates the DOM based on provided localized saved data
-            const start = new Date(startDate);
-            const end = new Date(start);
-            end.setDate(start.getDate() + 6);
+            const start = new Date(startDate); const end = new Date(start); end.setDate(start.getDate() + 6);
             document.getElementById('rangeHeader').innerText = `WEEK FROM ${fmt(start)} TO ${fmt(end)}`;
 
             const fragment = document.createDocumentFragment();
             for (let i = 0; i < 7; i++) {
                 let day = new Date(start); day.setDate(start.getDate() + i);
-                const dayData = data[i] || { travel: '', entries: [{ arr: '', dep: '', work: '' }] };
-                if (dayData.entries.length === 0) dayData.entries.push({ arr: '', dep: '', work: '' });
+                const dayData = data[i] || { travel: '', entries: [{ time: '', work: '' }] };
+                if (dayData.entries.length === 0) dayData.entries.push({ time: '', work: '' });
 
                 let innerRowsHtml = '';
                 dayData.entries.forEach((e, idx) => {
-                    innerRowsHtml += createEntryRowHTML(idx === 0, e.arr, e.dep, e.work);
+                    // Safe fallback for parsing older formats containing 'arr' & 'dep'
+                    let tVal = e.time !== undefined ? e.time : (e.arr || e.dep ? `${e.arr} - ${e.dep}` : '');
+                    innerRowsHtml += createEntryRowHTML(idx === 0, tVal, e.work);
                 });
 
-                const tr = document.createElement('tr');
-                tr.style.animationDelay = `${i * 0.05}s`;
-                tr.innerHTML = `
-                    <td class="date-cell">
-                        <div class="date-num">${fmt(day)}</div>
-                        <div class="day-name">${dayNames[i]}</div>
-                    </td>
-                    <td><textarea class="text-box travel-box" rows="4" placeholder="Enter travel details...">${escapeHtml(dayData.travel)}</textarea></td>
-                    <td colspan="2" style="padding: 0; border-left: 1px solid var(--border-color);">
-                        <table class="inner-table" id="group-${i}">
-                            ${innerRowsHtml}
-                        </table>
-                        <div style="padding: 0 16px 16px;">
-                            <button class="add-row-btn no-print" onclick="addEntry(${i})">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                                Add Activity
-                            </button>
-                        </div>
-                    </td>`;
+                const tr = document.createElement('tr'); tr.style.animationDelay = `${i * 0.05}s`;
+                tr.innerHTML = getDayRowHTML(i, day, dayData.travel, innerRowsHtml);
                 fragment.appendChild(tr);
             }
-            const body = document.getElementById('diaryRows');
-            body.innerHTML = '';
-            body.appendChild(fragment);
-            initPickers();
+            const body = document.getElementById('diaryRows'); body.innerHTML = ''; body.appendChild(fragment);
         }
 
-        function createEntryRowHTML(isFirst, arr = '', dep = '', work = '') {
+        function getDayRowHTML(i, day, travel = '', innerRows = null) {
+            if (!innerRows) innerRows = createEntryRowHTML(true);
+            return `
+                <td class="date-cell"><div class="date-num">${fmt(day)}</div><div class="day-name">${dayNames[i]}</div></td>
+                <td><textarea class="text-box travel-box" rows="4" placeholder="Enter travel details...">${escapeHtml(travel)}</textarea></td>
+                <td colspan="2" style="padding: 0; border-left: 1px solid var(--border-color);">
+                    <table class="inner-table" id="group-${i}">${innerRows}</table>
+                    <div style="padding: 0 16px 16px;">
+                        <button class="add-row-btn no-print" onclick="addEntry(${i})">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Add Activity
+                        </button>
+                    </div>
+                </td>`;
+        }
+
+        function createEntryRowHTML(isFirst, time = '', work = '') {
             return `
             <tr class="entry-row">
                 <td class="time-cell" style="padding: 16px;">
-                    <div class="time-inputs">
-                        <input type="text" class="t-input arr-time" placeholder="Arrival" value="${escapeHtml(arr)}">
-                        <input type="text" class="t-input dep-time" placeholder="Departure" value="${escapeHtml(dep)}">
+                    <div class="time-input-wrap">
+                        <textarea class="text-box t-input" rows="${isFirst ? 3 : 2}" placeholder="Enter timings manually...">${escapeHtml(time)}</textarea>
+                        <button class="mic-btn no-print" onclick="startMic(this, 'en-US')" title="English Voice">🎤</button>
                     </div>
                 </td>
                 <td class="work-cell" style="padding: 16px;">
@@ -697,137 +749,60 @@
             </tr>`;
         }
 
-        function escapeHtml(unsafe) {
-            if (!unsafe) return '';
-            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-
-        function addEntry(idx) {
-            const table = document.getElementById(`group-${idx}`);
-            table.insertAdjacentHTML('beforeend', createEntryRowHTML(false));
-            initPickers(); // Re-bind Flatpickr to new inputs
-            saveDebounced();
-        }
-
-        function deleteEntry(btn) {
-            const row = btn.closest('.entry-row');
-            if (row) {
-                row.remove();
-                saveDebounced();
-            }
-        }
-
-        function initPickers() {
-            // Initialize 12-hour AM/PM time pickers; targeted gracefully without duplication
-            flatpickr('.arr-time:not(.flatpickr-input), .dep-time:not(.flatpickr-input)', {
-                enableTime: true,
-                noCalendar: true,
-                dateFormat: "h:i K",
-                allowInput: true
-            });
-        }
+        function escapeHtml(unsafe) { return unsafe ? unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") : ''; }
+        function addEntry(idx) { document.getElementById(`group-${idx}`).insertAdjacentHTML('beforeend', createEntryRowHTML(false)); saveDebounced(); }
+        function deleteEntry(btn) { const row = btn.closest('.entry-row'); if (row) { row.remove(); saveDebounced(); } }
 
         // --- Interactivity ---
         function startMic(btn, lang) {
             const area = btn.previousElementSibling;
+            if (!window.SpeechRecognition && !window.webkitSpeechRecognition) { showToast("Voice typing not supported on this browser.", "error"); return; }
             const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            rec.lang = lang;
-            btn.classList.add('active-mic');
-
-            // Comprehensive Event Handlers to avoid infinite spin states
-            rec.onresult = (e) => {
-                area.value += e.results[0][0].transcript + " ";
-                btn.classList.remove('active-mic');
-                saveDebounced();
-            };
-            rec.onerror = (e) => {
-                console.warn("Speech recognition error", e);
-                btn.classList.remove('active-mic');
-                showToast("Voice typing stopped.", "info");
-            };
-            rec.onnomatch = () => btn.classList.remove('active-mic');
+            rec.lang = lang; btn.classList.add('active-mic');
+            rec.onresult = (e) => { area.value += e.results[0][0].transcript + " "; btn.classList.remove('active-mic'); saveDebounced(); };
+            rec.onerror = () => { btn.classList.remove('active-mic'); showToast("Voice typing stopped.", "info"); };
             rec.onend = () => btn.classList.remove('active-mic');
-
             rec.start();
         }
 
         function runAI() {
-            document.querySelectorAll('.w-input').forEach(el => {
-                let v = el.value;
-                if (!v) return;
-
+            document.querySelectorAll('.t-input, .w-input').forEach(el => {
+                let v = el.value; if (!v) return;
                 for (let k in dict) v = v.replace(new RegExp(k, 'g'), dict[k]);
-
-                // Capitalize first letter of every sentence logically
-                v = v.replace(/\s+/g, ' ').trim();
-                v = v.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, sep, c) => sep + c.toUpperCase());
+                v = v.replace(/\s+/g, ' ').trim().replace(/(^\s*|[.!?]\s+)([a-z])/g, (m, sep, c) => sep + c.toUpperCase());
                 el.value = v;
             });
-            showToast("Language aligned & sentences capitalized successfully.", "success");
-            saveDebounced();
+            showToast("Language aligned.", "success"); saveDebounced();
         }
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.innerText = message;
-            container.appendChild(toast);
-
-            // Trigger reflow for animation
-            requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400); // Wait for transition
-            }, 3000);
+        // --- Export & Cloud Backend Integration ---
+        function getOfficerPlainName() {
+            return document.getElementById('officerNameNode').innerText.replace('Officer:', '').trim();
         }
 
-        function openPreview() {
-            const area = document.getElementById('printArea');
-            area.innerHTML = `<h3 style="text-align:center; font-family:'Times New Roman';">WEEKLY DIARY OF N. KRISHNAIAH, CI OF POLICE</h3>` + getCleanTable();
-            document.getElementById('previewModal').style.display = 'block';
+        function getOfficerFolderName() {
+            return getOfficerPlainName().replace(/[^a-zA-Z0-9]/g, '_');
         }
 
-        function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
-
-        // --- Export Engine ---
-        function getCleanTable() {
-            // Uses cloning to sanitize inputs into flat HTML valid for Word layout
+        function getWordHTMLString() {
             const clone = document.getElementById('mainDiaryTable').cloneNode(true);
 
-            clone.querySelectorAll('.time-inputs').forEach(div => {
-                const arr = div.querySelector('.arr-time').value;
-                const dep = div.querySelector('.dep-time').value;
-                const p = document.createElement('p');
-                let txt = [];
-                if (arr) txt.push(`Arr: ${arr}`);
-                if (dep) txt.push(`Dep: ${dep}`);
-                p.innerHTML = txt.join('<br>') || '-';
-                p.style.margin = "0";
-                div.parentNode.replaceChild(p, div);
-            });
-
+            // Map textareas to clean paragraph tags for Word Doc export
             clone.querySelectorAll('textarea').forEach(ta => {
                 const p = document.createElement('p');
-                p.innerText = ta.value; p.style.margin = "0"; p.style.whiteSpace = "pre-wrap";
+                p.innerText = ta.value;
+                p.style.margin = "0";
+                p.style.whiteSpace = "pre-wrap";
                 ta.parentNode.replaceChild(p, ta);
             });
-
             clone.querySelectorAll('.no-print').forEach(b => b.remove());
-            return clone.outerHTML;
-        }
 
-        function saveAsWord() {
-            // Applying strict MSO (Microsoft Office) reliable styling syntax to the HTML blob
-            const html = `
+            return `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <head><style>
                 table { border: 1pt solid black; border-collapse: collapse; width: 100%; }
-                /* Explicit table styling required due to MSO limitations */
                 #mainDiaryTable td, #mainDiaryTable th { border: 1pt solid black; padding: 6pt; font-family: 'Times New Roman'; font-size: 11pt; vertical-align: top; }
                 #mainDiaryTable th { background: #e0e0e0; font-weight: bold; }
-                
                 .inner-table { border: none !important; width: 100%; border-collapse: collapse; }
                 .inner-table td { border: none !important; border-bottom: 0.5pt solid black !important; padding: 4pt 0; }
                 .inner-table tr:last-child td { border-bottom: none !important; }
@@ -835,17 +810,123 @@
                 .work-cell { width: 65%; padding-left: 5pt !important; }
             </style></head>
             <body>
-                <h3 style="text-align:center; font-family:'Times New Roman'; text-transform:uppercase;">Weekly Diary of N. KRISHNAIAH</h3>
+                <h3 style="text-align:center; font-family:'Times New Roman'; text-transform:uppercase;">Weekly Diary of ${getOfficerPlainName()}</h3>
                 <p style="text-align:center; font-family:'Times New Roman';">${document.getElementById('rangeHeader').innerText}</p>
-                ${getCleanTable()}
+                ${clone.outerHTML}
             </body></html>`;
-
-            const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-            a.download = 'Official_Diary_Krishnaiah.doc'; a.click();
-            showToast("Exporting to Word...", "info");
         }
 
+        function saveAsWord() {
+            const blob = new Blob(['\ufeff', getWordHTMLString()], { type: 'application/msword' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `Diary_${getOfficerFolderName()}.doc`; a.click();
+            showToast("Exporting Local Document...", "info");
+        }
+
+        // --- Cloud Features ---
+        async function uploadToCloud() {
+            if (!supabaseClient) { showToast("Supabase not configured.", "error"); return; }
+
+            const dateStr = document.getElementById('dateSelector').value;
+            if (!dateStr) { showToast("Please select a date first", "error"); return; }
+
+            showToast("Generating and Uploading...", "info");
+
+            const blob = new Blob(['\ufeff', getWordHTMLString()], { type: 'application/msword' });
+            const folderName = getOfficerFolderName();
+            const fileName = `${folderName}/${dateStr}.doc`;
+
+            const { data, error } = await supabaseClient.storage.from('reports').upload(fileName, blob, {
+                upsert: true,
+                contentType: 'application/msword'
+            });
+
+            if (error) {
+                showToast(`Upload failed: ${error.message}`, "error");
+            } else {
+                showToast("✅ Successfully uploaded to Cloud Storage!", "success");
+            }
+        }
+
+        async function openCloudArchive() {
+            if (!supabaseClient) { showToast("Supabase not configured.", "error"); return; }
+
+            document.getElementById('archiveName').innerText = getOfficerPlainName();
+            const listDiv = document.getElementById('cloudList');
+            listDiv.innerHTML = '<p>Loading your cloud archive...</p>';
+            document.getElementById('cloudModal').style.display = 'block';
+
+            const folderName = getOfficerFolderName();
+            const { data, error } = await supabaseClient.storage.from('reports').list(folderName);
+
+            if (error) {
+                listDiv.innerHTML = `<p style="color:var(--red-apple)">Error: ${error.message}</p>`;
+                return;
+            }
+
+            const files = data ? data.filter(f => f.name.endsWith('.doc')) : [];
+
+            if (files.length === 0) {
+                listDiv.innerHTML = `<p>No cloud reports found for this officer yet.</p>`;
+                return;
+            }
+
+            listDiv.innerHTML = '';
+            files.sort((a, b) => b.name.localeCompare(a.name));
+
+            files.forEach(file => {
+                const filePath = `${folderName}/${file.name}`;
+                const { data: urlData } = supabaseClient.storage.from('reports').getPublicUrl(filePath);
+
+                const item = document.createElement('div');
+                item.className = 'cloud-item';
+                item.innerHTML = `
+                    <span>📄 Week starting <b>${file.name.replace('.doc', '')}</b></span>
+                    <div style="display:flex; gap:10px;">
+                        <a href="${urlData.publicUrl}" download target="_blank" class="download-link">⬇️ Download</a>
+                        <button class="delete-link" onclick="deleteCloudFile('${filePath}')">🗑️ Delete</button>
+                    </div>
+                `;
+                listDiv.appendChild(item);
+            });
+        }
+
+        async function deleteCloudFile(filePath) {
+            // 1. Confirm Warning
+            if (!confirm("⚠️ Are you sure you want to delete this report from the cloud? This action cannot be undone.")) return;
+
+            // 2. Password Prompt
+            const pwd = prompt("Please enter the password to delete this file:");
+
+            if (pwd === "CIdairy@badvel") {
+                showToast("Deleting file...", "info");
+
+                // 3. Supabase Deletion
+                const { data, error } = await supabaseClient.storage.from('reports').remove([filePath]);
+
+                if (error) {
+                    showToast(`Failed to delete: ${error.message}`, "error");
+                } else {
+                    showToast("File successfully deleted from cloud.", "success");
+                    openCloudArchive(); // Refresh the list
+                }
+            } else if (pwd !== null) {
+                showToast("Incorrect password. Deletion cancelled.", "error");
+            }
+        }
+
+        // --- Utilities ---
+        function showToast(message, type = 'success') {
+            const c = document.getElementById('toastContainer'); const t = document.createElement('div');
+            t.className = `toast toast-${type}`; t.innerText = message; c.appendChild(t);
+            requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+        }
+        function openPreview() {
+            document.getElementById('printArea').innerHTML = `<h3 style="text-align:center; font-family:'Times New Roman';">WEEKLY DIARY OF ${getOfficerPlainName()}</h3>` + getWordHTMLString().split('<body>')[1].split('</body>')[0];
+            document.getElementById('previewModal').style.display = 'block';
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function fmt(d) { return d.getDate().toString().padStart(2, '0') + "." + (d.getMonth() + 1).toString().padStart(2, '0') + "." + d.getFullYear(); }
     </script>
 </body>
